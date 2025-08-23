@@ -14,7 +14,7 @@ struct HomeView: View {
     var body: some View {
         HStack {
             leftpanel
-            //rightpanel
+            rightpanel
         }
         .padding(.horizontal)
     }
@@ -39,6 +39,7 @@ struct HomeView: View {
                 .buttonStyle(.borderedProminent)
                 
                 Button("Clear") {
+                    print(Environment.baseURL)
                     viewModel.clear()
                 }
             }
@@ -77,6 +78,7 @@ struct HomeView: View {
             .padding(.vertical)
     }
 }
+
 
 #Preview {
     HomeView()

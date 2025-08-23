@@ -10,7 +10,7 @@ import Foundation
 // Small helper to enconde the game rules
 // Maintain here to avoid View/ViewModel burden
 enum HanoiRules {
-    // Return true when we are moving the 'top' disk of the source rod and we dont place a larger disk on top of a smaller 
+    // Return true when we are moving the 'top' disk of the source rod and we dont place a larger disk on top of a smaller
     static func isLegal(_ move: Move, on state: RodState) -> Bool {
         guard state.top(of: move.from) == move.disk else { return  false }
         

@@ -7,8 +7,6 @@
 
 import Foundation
 
-enum Rod {
-    case a
-    case b
-    case c
+enum Rod: String {
+    case A, B, C
 }

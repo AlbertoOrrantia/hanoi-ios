@@ -4,5 +4,10 @@
 <dict>
 	<key>HANOI_BASE_URL</key>
 	<string>http://127.0.0.1:8080/</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

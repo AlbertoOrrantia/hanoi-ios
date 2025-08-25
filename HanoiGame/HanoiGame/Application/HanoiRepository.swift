@@ -15,6 +15,11 @@ struct SolveRequest: Encodable {
         "aux": "B",
         "to": "C"
     ]
+    
+    private enum CodingKeys: String, CodingKey {
+        case diskCount = "n"
+        case labels
+    }
 }
 
 //JSON recieved from Backend

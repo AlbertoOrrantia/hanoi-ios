@@ -24,7 +24,7 @@ struct HomeView: View {
     private var leftpanel: some View {
         VStack(alignment: .leading, spacing: 12.0) {
             
-            Text("Haoi Tower")
+            Text("Hanoi Tower")
                 .font(.title.bold())
             
             //Disk Selector

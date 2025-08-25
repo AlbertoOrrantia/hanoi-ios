@@ -19,9 +19,9 @@ enum HanoiRules {
         }
         return true
     }
-    
+        
     // Minimal number of moves to solve (2**n-1)
-    static func minimalCoubt(forDiskCount diskCount: Int) -> UInt64 {
+    static func minimalCount(forDiskCount diskCount: Int) -> UInt64 {
         diskCount <= 0 ? 0 : (1 << diskCount) - 1
     }
 }

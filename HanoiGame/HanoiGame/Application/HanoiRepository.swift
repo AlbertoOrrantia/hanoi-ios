@@ -34,14 +34,14 @@ struct SolveResponse: Decodable {
     let moveCount: UInt64
     let moves: [MoveDTO]? // omitted for large n
     let movesOmitted: Bool
-    let elapsedMiliseconds: Double
+    let elapsedMilliseconds: Double
     
     private enum CodingKeys: String, CodingKey {
         case diskCount = "n"
         case moveCount = "count"
         case moves
         case movesOmitted
-        case elapsedMiliseconds = "elapsed_ms"
+        case elapsedMilliseconds = "elapsed_ms"
     }
 }
 

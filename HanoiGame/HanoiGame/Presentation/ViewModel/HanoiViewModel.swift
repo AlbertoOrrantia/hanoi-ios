@@ -37,14 +37,17 @@ final class HanoiViewModel {
         do {
             let response = try await repository.solve(for: diskCount)
             
+            let totalMoves: UInt64 = response.moveCount != 0 ? response.moveCount : HanoiRules.minimalCount(forDiskCount: diskCount)
+            
             if let moves = response.moves {
                 steps = moves.map { move in
                     "Take disk \(move.disk) from rod \(move.from) to rod \(move.to)"
                 }
-                steps.append(contentsOf: ["Total time elapsed: \(String(format: "%.2f", response.elapsedMiliseconds)) ms"])
+                steps.append(contentsOf: ["Total moves: \(totalMoves)"])
+                steps.append(contentsOf: ["Total time elapsed: \(String(format: "%.2f", response.elapsedMilliseconds)) ms"])
             } else {
-                steps = ["Moves omitted (\(response.moves) total)",
-                         "Time Elapsed: \(String(format: "%.2f", response.elapsedMiliseconds)) ms"]
+                steps = ["Moves omitted, total moves: \(totalMoves)",
+                         "Time Elapsed: \(String(format: "%.2f", response.elapsedMilliseconds)) ms"]
             }
         } catch {
             errorMessage = error.localizedDescription

@@ -41,8 +41,10 @@ final class HanoiViewModel {
                 steps = moves.map { move in
                     "Take disk \(move.disk) from rod \(move.from) to rod \(move.to)"
                 }
+                steps.append(contentsOf: ["Total time elapsed: \(String(format: "%.2f", response.elapsedMiliseconds)) ms"])
             } else {
-                steps = ["Moves omitted (\(response.moves) total)"]
+                steps = ["Moves omitted (\(response.moves) total)",
+                         "Time Elapsed: \(String(format: "%.2f", response.elapsedMiliseconds)) ms"]
             }
         } catch {
             errorMessage = error.localizedDescription

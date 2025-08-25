@@ -30,7 +30,7 @@ struct HomeView: View {
             //Disk Selector
             Stepper("Disks: \(viewModel.diskCount)",
                     value: $viewModel.diskCount,
-                    in: 3...20)
+                    in: 1...64)
             
             HStack(spacing: 12.0) {
                 Button("Fetch Solution") {

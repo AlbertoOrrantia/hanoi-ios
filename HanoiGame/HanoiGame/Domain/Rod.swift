@@ -7,6 +7,6 @@
 
 import Foundation
 
-enum Rod: String {
+enum Rod: String, CaseIterable {
     case A, B, C
 }

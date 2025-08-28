@@ -77,19 +77,33 @@ struct HomeView: View {
                     boardVM.isPlaying ? boardVM.pause() : boardVM.play()
                 }
                 .buttonStyle(.bordered)
+                .buttonBorderShape(.roundedRectangle)
+                .controlSize(.large)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: 88)
                 
                 Button("Reset") {
                     boardVM.reset(diskCount: viewModel.diskCount)
                 }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.roundedRectangle)
+                .controlSize(.large)
+                .frame(minWidth: 88)
+                
+                Spacer()
                 
                 Text("Speed")
-                     Slider(value: Binding(
+                    .font(.caption)
+                
+                Slider(value: Binding(
                         get: { boardVM.speed },
                         set: { boardVM.speed = max(0.1, $0) }),
                             in: 0.1...2.0)
-                        .frame(width: 160)
+                        .frame(minWidth: 160)
             }
             .font(.callout)
+            .padding(.top, 2)
             
             //Board View
             BoardView(viewModel: boardVM)

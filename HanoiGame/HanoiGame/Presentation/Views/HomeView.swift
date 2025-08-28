@@ -26,12 +26,13 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12.0) {
             
             Text("Hanoi Tower")
-                .font(.title.bold())
+                .font(Design.Fonts.title)
             
             //Disk Selector
             Stepper("Disks: \(viewModel.diskCount)",
                     value: $viewModel.diskCount,
                     in: 1...64)
+            .font(Design.Fonts.label)
             
             HStack(spacing: 12.0) {
                 Button("Fetch Solution") {
@@ -52,10 +53,11 @@ struct HomeView: View {
             if let message = viewModel.errorMessage {
                 Text(message)
                     .foregroundStyle(.red)
-                    .padding(.top, 4.0)
+                    .font(Design.Fonts.label)
+                    .padding(.top, Design.Spacing.xs)
             }
             
-            Divider().padding(.vertical, 6.0)
+            Divider().padding(.vertical, Design.Spacing.sm)
             
             //Steps List
             List(viewModel.steps, id: \.self) { step in

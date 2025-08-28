@@ -28,7 +28,7 @@ struct BoardView: View {
         ZStack(alignment: .bottom) {
             // Pole
             RoundedRectangle(cornerRadius: 3)
-                .fill(Color.secondary.opacity(0.2))
+                .fill(Color.secondary.opacity(0.22))
                 .frame(width: 8, height: 220)
                 .offset(y: -10)
 
@@ -60,10 +60,12 @@ private struct DiscView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.blue.opacity(0.25))
+            RoundedRectangle(cornerRadius: Design.Radius.sm)
+                .fill(
+                    LinearGradient(colors: [.blue.opacity(0.25), .blue.opacity(0.18)], startPoint: .top, endPoint: .bottom)
+                )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: Design.Radius.sm)
                         .stroke(.blue.opacity(0.6), lineWidth: 1)
                 )
                 .frame(width: width, height: 22)

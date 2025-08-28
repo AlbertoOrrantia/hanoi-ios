@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     
@@ -77,6 +78,7 @@ struct HomeView: View {
             //Player Controls
             HStack(spacing: Design.Spacing.lg) {
                 Button(boardVM.isPlaying ? "Pause" : "Play") {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     boardVM.isPlaying ? boardVM.pause() : boardVM.play()
                 }
                 .buttonStyle(.bordered)
@@ -85,14 +87,17 @@ struct HomeView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(minWidth: 88)
+                .accessibilityLabel(boardVM.isPlaying ? "Pause Animation" : "Play Animation")
                 
                 Button("Reset") {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
                     boardVM.reset(diskCount: viewModel.diskCount)
                 }
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.roundedRectangle)
                 .controlSize(.large)
                 .frame(minWidth: 88)
+                .accessibilityLabel("Reset baord")
                 
                 Spacer(minLength: Design.Spacing.lg)
                 
@@ -102,6 +107,7 @@ struct HomeView: View {
                         set: { boardVM.speed = max(0.1, $0) }),
                             in: 0.1...2.0)
                         .frame(minWidth: 160)
+                        .accessibilityLabel("Playback Speed")
             }
             .font(Design.Fonts.label)
             .padding(.top, Design.Spacing.xs)

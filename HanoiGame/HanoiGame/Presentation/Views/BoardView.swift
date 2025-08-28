@@ -34,7 +34,7 @@ struct BoardView: View {
 
             // Base
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color.secondary.opacity(0.25))
+                .fill(Color.secondary.opacity(0.22))
                 .frame(width: width * 0.9, height: 10)
                 .offset(y: 5)
 
@@ -51,6 +51,7 @@ struct BoardView: View {
         }
         .frame(width: width, height: 260, alignment: .bottom)
         .accessibilityLabel("Rod \(rod.rawValue)")
+        .accessibilityHint("Hanoi Tower Rod")
     }
 }
 

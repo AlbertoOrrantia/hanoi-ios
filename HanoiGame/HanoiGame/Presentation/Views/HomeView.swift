@@ -62,9 +62,10 @@ struct HomeView: View {
             //Steps List
             List(viewModel.steps, id: \.self) { step in
                 Text(step)
-                    .font(.callout)
+                    .font(Design.Fonts.mono)
                     .monospacedDigit()
             }
+            .listStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(.vertical)

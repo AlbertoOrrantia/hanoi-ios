@@ -70,10 +70,12 @@ struct HomeView: View {
             Divider().padding(.vertical, Design.Spacing.sm)
             
             //Steps List
-            List(viewModel.steps, id: \.self) { step in
-                Text(step)
-                    .font(Design.Fonts.mono)
-                    .monospacedDigit()
+            List {
+                ForEach(Array(viewModel.steps.enumerated()), id: \.offset) { _, step in
+                        Text(step)
+                            .font(Design.Fonts.mono)
+                            .monospacedDigit()
+                    }
             }
             .listStyle(.plain)
         }

@@ -19,6 +19,9 @@ final class HanoiViewModel {
     var isLoading: Bool = false
     var errorMessage: String?
     
+    // Keep the last backend reponse for the usage on the board
+    var lastResponse: SolveResponse?
+    
     private let repository: HanoiRepository
     
     init(repository: HanoiRepository = NetworkHanoiRepository()) {
@@ -36,6 +39,7 @@ final class HanoiViewModel {
         
         do {
             let response = try await repository.solve(for: diskCount)
+            self.lastResponse = response
             
             let totalMoves: UInt64 = response.moveCount != 0 ? response.moveCount : HanoiRules.minimalCount(forDiskCount: diskCount)
             

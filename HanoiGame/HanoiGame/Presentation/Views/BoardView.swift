@@ -39,7 +39,7 @@ struct BoardView: View {
                 .offset(y: 5)
 
             VStack(spacing: 6) {
-                ForEach(viewModel.rods[rod] ?? [], id: \.self) { size in
+                ForEach((viewModel.rods[rod] ?? []).reversed(), id: \.self) { size in
                     // width grows with size,1 is minimal
                     let w = max(40, (width * 0.75) * CGFloat(size) / CGFloat(max(1, (viewModel.rods[.A]?.max() ?? 1))))
                     DiscView(width: w, label: "\(size)")

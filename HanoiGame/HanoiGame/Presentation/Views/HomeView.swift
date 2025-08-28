@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     
     @State private var viewModel = HanoiViewModel()
+    @State private var boardVM = BoardViewModel()
     
     var body: some View {
         HStack {
@@ -68,14 +69,40 @@ struct HomeView: View {
     }
     
     private var rightpanel: some View {
-        RoundedRectangle(cornerRadius: 12.0)
-            .stroke(style: .init(lineWidth: 2.0, dash: [6.0, 6.0]))
-            .overlay {
-                Text("Board View (next)")
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            
+            //Player Controls
+            HStack(spacing: 12) {
+                Button(boardVM.isPlaying ? "Pause" : "Play") {
+                    boardVM.isPlaying ? boardVM.pause() : boardVM.play()
+                }
+                .buttonStyle(.bordered)
+                
+                Button("Reset") {
+                    boardVM.reset(diskCount: viewModel.diskCount)
+                }
+                
+                Text("Speed")
+                     Slider(value: Binding(
+                        get: { boardVM.speed },
+                        set: { boardVM.speed = max(0.1, $0) }),
+                            in: 0.1...2.0)
+                        .frame(width: 160)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.vertical)
+            .font(.callout)
+            
+            //Board View
+            BoardView(viewModel: boardVM)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(style: .init(lineWidth: 2,dash: [6,6]))
+                        .foregroundStyle(.secondary.opacity(0.7))
+                )
+        }
+        .frame(maxWidth: .infinity, maxHeight:.infinity, alignment: .topLeading)
+        .padding(.vertical)
     }
 }
 

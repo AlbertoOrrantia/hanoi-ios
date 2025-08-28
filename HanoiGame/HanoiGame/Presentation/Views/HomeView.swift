@@ -12,6 +12,7 @@ struct HomeView: View {
     
     @State private var viewModel = HanoiViewModel()
     @State private var boardVM = BoardViewModel()
+    @State private var showError: Bool = false
     
     var body: some View {
         HStack {
@@ -19,6 +20,14 @@ struct HomeView: View {
             rightpanel
         }
         .padding(.horizontal)
+        .onChange(of: viewModel.errorMessage) { _, newValue in
+            showError = (newValue != nil)
+        }
+        .alert("Network Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.errorMessage ?? "Unknown error")
+        }
     }
     
     //MARK: - Panels

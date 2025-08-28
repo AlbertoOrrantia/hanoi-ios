@@ -75,7 +75,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             
             //Player Controls
-            HStack(spacing: 12) {
+            HStack(spacing: Design.Spacing.lg) {
                 Button(boardVM.isPlaying ? "Pause" : "Play") {
                     boardVM.isPlaying ? boardVM.pause() : boardVM.play()
                 }
@@ -94,19 +94,17 @@ struct HomeView: View {
                 .controlSize(.large)
                 .frame(minWidth: 88)
                 
-                Spacer()
+                Spacer(minLength: Design.Spacing.lg)
                 
-                Text("Speed")
-                    .font(.caption)
-                
+                Text("Speed") .font(Design.Fonts.note)
                 Slider(value: Binding(
                         get: { boardVM.speed },
                         set: { boardVM.speed = max(0.1, $0) }),
                             in: 0.1...2.0)
                         .frame(minWidth: 160)
             }
-            .font(.callout)
-            .padding(.top, 2)
+            .font(Design.Fonts.label)
+            .padding(.top, Design.Spacing.xs)
             
             //Board View
             BoardView(viewModel: boardVM)

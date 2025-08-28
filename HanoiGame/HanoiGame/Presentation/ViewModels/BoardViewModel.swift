@@ -21,6 +21,18 @@ final class BoardViewModel {
     private var queued: [SolveResponse.MoveDTO] = []
     private var playTask: Task<Void, Never>?
     
+    //UI Flags
+    var hasQueue:Bool { !queued.isEmpty } //True if there are moves
+    var isAtStart: Bool { currentIndex == 0 }
+    var isAtEnd: Bool { currentIndex >= queued.count } //past las move
+    
+    //Progress
+    var progressText: String {
+        guard hasQueue else { return "0/0" }
+        return "\(currentIndex)/\(queued.count)"
+    }
+    
+    
     //MARK: Setup
     func reset(diskCount n: Int) {
         rods[.A] = Array((1...n).reversed()) //Biggest at bottom
@@ -35,10 +47,16 @@ final class BoardViewModel {
         queued = moves
     }
     
+    //Reflect a new disk count on board before we fecch moves
+    func setDiskCountWithoutMoves(_ n: Int) {
+        queued = []
+        reset(diskCount: n)
+    }
+    
     //MARK: Player Controles
     
     func play() {
-        guard !isPlaying, !queued.isEmpty else { return }
+        guard !isPlaying, hasQueue, !isAtEnd else { return }
         isPlaying = true
         playTask = Task { [weak self] in
             guard let self else { return }
@@ -58,24 +76,49 @@ final class BoardViewModel {
     
     func stop() { pause() }
     
-    
+    //Step Controls
+    @MainActor
+    func stepForward() {
+        guard hasQueue, !isAtEnd else { return }
+        apply(move: queued[currentIndex])
+        currentIndex += 1
+    }
     
     @MainActor
-    private func applyNext() async {
-        guard currentIndex < queued.count else { return }
-        let m = queued[currentIndex]
-        currentIndex += 1
-        
-        guard let from = Rod(rawValue: m.from), let to = Rod(rawValue: m.to) else { return }
-        
-        //Pop from
-        guard var fromStack = rods[from], var toStack = rods[to] else { return }
-        guard let disk = fromStack.popLast() else { return }
-        
-        //Rule validation, cant stack bigger one on top of smaller
-        if let top = toStack.last, top < disk { return }
-        toStack.append(disk)
-        rods[from] = fromStack
-        rods[to] = toStack
+    func stepBackward() {
+        guard hasQueue, !isAtStart else { return }
+        let last = queued[currentIndex - 1]
+        //Undo by reversing from & to
+        let undo = SolveResponse.MoveDTO(disk: last.disk, from: last.to, to: last.from)
+        apply(move: undo)
+        currentIndex -= 1
     }
+    
+    //Simplified ApplyNext by delegating to Apply
+    @MainActor
+    private func applyNext() async {
+        guard hasQueue, !isAtEnd else { return }
+        apply(move: queued[currentIndex])
+        currentIndex += 1
+    }
+    
+    @MainActor
+    private func apply(move: SolveResponse.MoveDTO)  {
+        guard
+                   let fromRod = Rod(rawValue: move.from),
+                   let toRod   = Rod(rawValue: move.to),
+                   var from    = rods[fromRod],
+                   var to      = rods[toRod]
+               else { return }
+               
+               // Pop from
+               guard let disk = from.popLast() else { return }
+               
+               // Rule validation, cant stack bigger one on top of smaller
+               if let top = to.last, top < disk { return }
+               to.append(disk)
+               rods[fromRod] = from
+               rods[toRod] = to
+    }
+
 }

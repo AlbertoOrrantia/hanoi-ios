@@ -1,13 +1,30 @@
+cat > .gitignore <<'EOF'
 # Xcode
 DerivedData/
 build/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
 *.xcuserstate
 
 # SwiftPM
 .swiftpm/
-Packages/
+.build/
 
-# General
-.DS_Store
+#
+*.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Misc
+*.DS_Store
+xcuserdata/
+EOF

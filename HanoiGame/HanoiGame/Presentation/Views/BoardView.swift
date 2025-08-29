@@ -12,7 +12,7 @@ struct BoardView: View {
 
     @State private var dragging: (rod: Rod, disk: Int)? = nil
     @State private var dragOffset: CGSize = .zero
-
+    
     var body: some View {
         GeometryReader { geo in
             let spacing: CGFloat = 16

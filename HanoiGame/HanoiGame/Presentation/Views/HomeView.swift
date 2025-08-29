@@ -14,6 +14,9 @@ struct HomeView: View {
     @State private var boardVM = BoardViewModel()
     @State private var showError: Bool = false
     
+    @AppStorage("hanoi_diskCount") private var savedDisks: Int = 4
+    @AppStorage("hanoi_speed")     private var savedSpeed: Double = 1.0
+    
     var body: some View {
         GeometryReader { geo in
             HStack(spacing: 0) {
@@ -29,6 +32,16 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .onChange(of: viewModel.errorMessage) { _, newValue in
                 showError = (newValue != nil)
+            }
+            .onAppear {
+                viewModel.diskCount = savedDisks
+                boardVM.speed = savedSpeed
+            }
+            .onChange(of: viewModel.diskCount) { _, new in
+                savedDisks = new
+            }
+            .onChange(of: boardVM.speed) { _, new in
+                savedSpeed = new
             }
             .alert("Network Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }

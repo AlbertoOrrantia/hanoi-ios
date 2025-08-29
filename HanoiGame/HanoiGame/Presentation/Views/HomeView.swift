@@ -43,8 +43,12 @@ struct HomeView: View {
             .onChange(of: boardVM.speed) { _, new in
                 savedSpeed = new
             }
+            // Friendly error alert with retry
             .alert("Network Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
+                Button("Retry") {
+                    Task { await viewModel.fetchSolution() }
+                }
+                Button("Cancel", role: .cancel) { }
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
@@ -95,6 +99,12 @@ struct HomeView: View {
                 Button("Clear") {
                     print(Environment.baseURL)
                     viewModel.clear()
+                }
+                
+                if !viewModel.steps.isEmpty {
+                    ShareLink("Share", item: viewModel.steps.joined(separator: "\n"))
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Share steps")
                 }
             }
             
@@ -197,18 +207,17 @@ struct HomeView: View {
             .font(Design.Fonts.label)
             .padding(.top, Design.Spacing.xs)
             
-            //Board View (extra trailing/bottom gutter to avoid clipping on iPhone landscape)
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(style: .init(lineWidth: 2, dash: [6,6]))
                     .foregroundStyle(.secondary.opacity(0.7))
                     .padding(.leading, 8)
-                    .padding(.trailing, 54)   // ↑ more room on the right
+                    .padding(.trailing, 54)
                 
                 BoardView(viewModel: boardVM)
                     .padding(.leading, 12)
-                    .padding(.trailing, 64)   // ↑ prevents right-edge chop
-                    .padding(.bottom, 22)     // ↑ off the home pill
+                    .padding(.trailing, 64)
+                    .padding(.bottom, 22)
             }
             .padding(.trailing, 18)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

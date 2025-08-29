@@ -15,25 +15,27 @@ struct BoardView: View {
     
     var body: some View {
         GeometryReader { geo in
+            let topInset: CGFloat = 10
+            
             let spacing: CGFloat = 16
             let colWidth    = (geo.size.width - spacing * 2) / 3.0
-            // cap height so rods don’t become infinite
-            let boardHeight = min(geo.size.height - 28, 400)
+            let boardHeight = min(geo.size.height - 28, 400) - topInset
 
             HStack(alignment: .bottom, spacing: spacing) {
-                column(.A, width: colWidth, height: boardHeight)
-                column(.B, width: colWidth, height: boardHeight)
-                column(.C, width: colWidth, height: boardHeight)
+                column(.A, width: colWidth, height: boardHeight, spacing: spacing)
+                column(.B, width: colWidth, height: boardHeight, spacing: spacing)
+                column(.C, width: colWidth, height: boardHeight, spacing: spacing)
             }
             .frame(width: geo.size.width, height: boardHeight, alignment: .bottom)
             .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.top, topInset)
             .padding(.horizontal, 0)
             .padding(.bottom, 2)
         }
     }
 
     //  Single rod + its stack
-    private func column(_ rod: Rod, width: CGFloat, height: CGFloat) -> some View {
+    private func column(_ rod: Rod, width: CGFloat, height: CGFloat, spacing: CGFloat) -> some View {
         ZStack(alignment: .bottom) {
             // Pole
             RoundedRectangle(cornerRadius: 3)
@@ -47,15 +49,19 @@ struct BoardView: View {
 
             VStack(spacing: 6) {
                 ForEach((viewModel.rods[rod] ?? []).reversed(), id: \.self) { size in
-                    let maxSize = CGFloat(max(1, (viewModel.rods[.A]?.max() ?? 1)))
+                    // Use global max so discs keep the same width while moving between rods
+                    let globalMaxInt = max(viewModel.rods.values.flatMap { $0 }.max() ?? 1, 1)
+                    let maxSize = CGFloat(globalMaxInt)
+
                     let w = max(40, (width * 0.75) * CGFloat(size) / maxSize)
                     let isTop = (viewModel.rods[rod]?.last == size)
 
                     DiscView(width: w, label: "\(size)")
                         .offset(dragging?.rod == rod && dragging?.disk == size ? dragOffset : .zero)
                         .allowsHitTesting(isTop && !viewModel.isPlaying)
+                        .contentShape(Rectangle())
                         .highPriorityGesture(
-                            DragGesture(minimumDistance: 5)
+                            DragGesture(minimumDistance: 3)
                                 .onChanged { value in
                                     guard isTop, viewModel.canPickTop(from: rod, disk: size) else { return }
                                     dragging = (rod, size)
@@ -63,10 +69,41 @@ struct BoardView: View {
                                 }
                                 .onEnded { value in
                                     guard dragging != nil else { return }
-                                    let stepWidth = width * 0.6
-                                    let steps = Int((value.translation.width / stepWidth).rounded())
-                                    let clamped = max(-2, min(2, steps))
-                                    let target = offsetRod(from: rod, by: clamped)
+
+                                    if abs(value.translation.width) < width * 0.25 {
+                                        dragging = nil
+                                        dragOffset = .zero
+                                        return
+                                    }
+
+                                    let order: [Rod] = [.A, .B, .C]
+                                    guard let startIdx = order.firstIndex(of: rod) else {
+                                        dragging = nil
+                                        dragOffset = .zero
+                                        return
+                                    }
+
+                                    let localX     = value.location.x
+                                    let absoluteX  = localX + CGFloat(startIdx) * (width + spacing)
+                                    let totalWidth = (width * 3) + (spacing * 2)
+                                    let ratio      = max(0, min(1, absoluteX / totalWidth))
+                                    let targetIdx  = Int((ratio * 3).clamped(to: 0...2))
+                                    let target     = order[targetIdx]
+
+                                    if target == rod {
+                                        dragging = nil
+                                        dragOffset = .zero
+                                        return
+                                    }
+
+                                    // manual mode rule: a bigger one can’t sit on a smaller one
+                                    if let top = viewModel.rods[target]?.last, top < size {
+                                        UINotificationFeedbackGenerator().notificationOccurred(.error)
+                                        dragging = nil
+                                        dragOffset = .zero
+                                        return
+                                    }
+
                                     Task { @MainActor in
                                         _ = viewModel.tryMoveTop(from: rod, to: target, enforceRules: false)
                                     }
@@ -114,5 +151,11 @@ private struct DiscView: View {
                 .foregroundStyle(.primary)
         }
         .shadow(radius: 1, y: 1)
+    }
+}
+
+private extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
     }
 }

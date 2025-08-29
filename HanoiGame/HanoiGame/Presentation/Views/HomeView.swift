@@ -24,7 +24,7 @@ struct HomeView: View {
                     .frame(width: min(max(geo.size.width * 0.26, 240), 300))
                     .padding(.leading, 16)
                 
-                rightpanel
+                rightpanel(geo: geo)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: max(420, geo.size.height - 40))
                     .padding(.trailing, 12)
@@ -32,6 +32,9 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .onChange(of: viewModel.errorMessage) { _, newValue in
                 showError = (newValue != nil)
+                if newValue != nil {
+                    UINotificationFeedbackGenerator().notificationOccurred(.error)
+                }
             }
             .onAppear {
                 viewModel.diskCount = savedDisks
@@ -43,7 +46,6 @@ struct HomeView: View {
             .onChange(of: boardVM.speed) { _, new in
                 savedSpeed = new
             }
-            // Friendly error alert with retry
             .alert("Network Error", isPresented: $showError) {
                 Button("Retry") {
                     Task { await viewModel.fetchSolution() }
@@ -72,9 +74,10 @@ struct HomeView: View {
             HStack(spacing: 12.0) {
                 Button("Fetch Solution") {
                     Task {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred() // tiny delight on tap
                         await viewModel.fetchSolution()
 
-                        if let response = viewModel.lastResponse {
+                        if let response = viewModel.lastResponse, viewModel.errorMessage == nil {
                             if let moves = response.moves {
                                 await MainActor.run {
                                     boardVM.load(diskCount: response.diskCount, moves: moves)
@@ -84,6 +87,7 @@ struct HomeView: View {
                                     boardVM.setDiskCountWithoutMoves(response.diskCount)
                                 }
                             }
+                            UINotificationFeedbackGenerator().notificationOccurred(.success) // success haptic
                         }
 
                         // quick sanity print
@@ -95,15 +99,26 @@ struct HomeView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .lineLimit(1)
+                .minimumScaleFactor(0.9)
                 
                 Button("Clear") {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred() // tiny delight on clear
                     print(Environment.baseURL)
                     viewModel.clear()
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .lineLimit(1)
+                .minimumScaleFactor(0.9)
                 
                 if !viewModel.steps.isEmpty {
                     ShareLink("Share", item: viewModel.steps.joined(separator: "\n"))
                         .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
                         .accessibilityLabel("Share steps")
                 }
             }
@@ -130,17 +145,16 @@ struct HomeView: View {
                     }
             }
             .listStyle(.plain)
+            .animation(.snappy(duration: 0.2), value: viewModel.steps) // smooth insert/remove
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(.vertical)
     }
     
-    private var rightpanel: some View {
+    private func rightpanel(geo: GeometryProxy) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Step Back
             HStack(spacing: Design.Spacing.lg) {
-                
-                //Step Back
+                // Step Back
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     boardVM.stepBackward()
@@ -151,8 +165,8 @@ struct HomeView: View {
                         .accessibilityLabel("Step Back")
                 }
                 .disabled(!boardVM.hasQueue || boardVM.isAtStart || boardVM.isPlaying)
-            
-            //Player Controls
+
+                // Play / Pause
                 Button(boardVM.isPlaying ? "Pause" : "Play") {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     boardVM.isPlaying ? boardVM.pause() : boardVM.play()
@@ -160,12 +174,9 @@ struct HomeView: View {
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.roundedRectangle)
                 .controlSize(.large)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
                 .frame(minWidth: 88)
-                .disabled(!boardVM.hasQueue || boardVM.isAtEnd)
-                .accessibilityLabel(boardVM.isPlaying ? "Pause Animation" : "Play Animation")
-                
+
+                // Reset
                 Button("Reset") {
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                     boardVM.reset(diskCount: viewModel.diskCount)
@@ -174,9 +185,7 @@ struct HomeView: View {
                 .buttonBorderShape(.roundedRectangle)
                 .controlSize(.large)
                 .frame(minWidth: 88)
-                .accessibilityLabel("Reset board")
-                
-                
+
                 // Step Forward
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -188,38 +197,46 @@ struct HomeView: View {
                         .accessibilityLabel("Step Forward")
                 }
                 .disabled(!boardVM.hasQueue || boardVM.isAtEnd || boardVM.isPlaying)
-                
-                Spacer(minLength: Design.Spacing.lg)
 
-                //Progress
                 Text(boardVM.progressText)
                     .font(Design.Fonts.note)
                     .monospacedDigit()
-                
-                Text("Speed") .font(Design.Fonts.note)
-                Slider(value: Binding(
-                        get: { boardVM.speed },
-                        set: { boardVM.speed = max(0.1, $0) }),
-                            in: 0.1...2.0)
-                        .frame(minWidth: 160)
-                        .accessibilityLabel("Playback Speed")
+                    .padding(.leading, 4)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Speed")
+                        .font(Design.Fonts.note)
+
+                    let minSpeed: Double = 0.1
+                    let maxSpeed: Double = 2.0
+                    Slider(
+                        value: Binding(
+                            get: { (minSpeed + maxSpeed) - boardVM.speed },
+                            set: { newVal in
+                                boardVM.speed = max(minSpeed, min(maxSpeed, (minSpeed + maxSpeed) - newVal))
+                            }
+                        ),
+                        in: minSpeed...maxSpeed
+                    )
+                    .frame(width: 140) // short, fits screen
+                    .accessibilityLabel("Playback Speed")
+                }
             }
-            .font(Design.Fonts.label)
-            .padding(.top, Design.Spacing.xs)
-            
+            .padding(.trailing, max(geo.safeAreaInsets.trailing, 22) + 8)
+
+            // Playable zone
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(style: .init(lineWidth: 2, dash: [6,6]))
                     .foregroundStyle(.secondary.opacity(0.7))
-                    .padding(.leading, 8)
-                    .padding(.trailing, 54)
-                
+                    .padding(.leading, 14)
+                    .padding(.trailing, max(geo.safeAreaInsets.trailing, 18))
+
                 BoardView(viewModel: boardVM)
-                    .padding(.leading, 12)
-                    .padding(.trailing, 64)
-                    .padding(.bottom, 22)
+                    .padding(.leading, 18)
+                    .padding(.trailing, max(geo.safeAreaInsets.trailing, 24) + 40)
+                    .padding(.bottom, max(geo.safeAreaInsets.bottom, 16) + 12)
             }
-            .padding(.trailing, 18)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight:.infinity, alignment: .topLeading)

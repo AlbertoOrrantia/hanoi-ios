@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>HANOI_BASE_URL</key>
-	<string>http://127.0.0.1:8080/</string>
+	<string>https://web-production-799a7.up.railway.app</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

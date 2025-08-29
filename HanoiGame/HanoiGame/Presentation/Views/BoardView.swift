@@ -10,48 +10,86 @@ import SwiftUI
 struct BoardView: View {
     @Bindable var viewModel: BoardViewModel
 
+    @State private var dragging: (rod: Rod, disk: Int)? = nil
+    @State private var dragOffset: CGSize = .zero
+
     var body: some View {
         GeometryReader { geo in
-            let colWidth = geo.size.width / 3.0
-            HStack(alignment: .bottom, spacing: 16) {
-                column(.A, width: colWidth)
-                column(.B, width: colWidth)
-                column(.C, width: colWidth)
+            let spacing: CGFloat = 16
+            let colWidth    = (geo.size.width - spacing * 2) / 3.0
+            // cap height so rods don’t become infinite
+            let boardHeight = min(geo.size.height - 28, 400)
+
+            HStack(alignment: .bottom, spacing: spacing) {
+                column(.A, width: colWidth, height: boardHeight)
+                column(.B, width: colWidth, height: boardHeight)
+                column(.C, width: colWidth, height: boardHeight)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            .padding(12)
+            .frame(width: geo.size.width, height: boardHeight, alignment: .bottom)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.horizontal, 0)
+            .padding(.bottom, 2)
         }
     }
 
     //  Single rod + its stack
-    private func column(_ rod: Rod, width: CGFloat) -> some View {
+    private func column(_ rod: Rod, width: CGFloat, height: CGFloat) -> some View {
         ZStack(alignment: .bottom) {
             // Pole
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color.secondary.opacity(0.22))
-                .frame(width: 8, height: 220)
-                .offset(y: -10)
+                .frame(width: 8, height: height * 0.82)
 
             // Base
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.secondary.opacity(0.22))
-                .frame(width: width * 0.9, height: 10)
-                .offset(y: 5)
+                .frame(width: width * 0.88, height: 10)
 
             VStack(spacing: 6) {
                 ForEach((viewModel.rods[rod] ?? []).reversed(), id: \.self) { size in
-                    // width grows with size,1 is minimal
-                    let w = max(40, (width * 0.75) * CGFloat(size) / CGFloat(max(1, (viewModel.rods[.A]?.max() ?? 1))))
+                    let maxSize = CGFloat(max(1, (viewModel.rods[.A]?.max() ?? 1)))
+                    let w = max(40, (width * 0.75) * CGFloat(size) / maxSize)
+                    let isTop = (viewModel.rods[rod]?.last == size)
+
                     DiscView(width: w, label: "\(size)")
+                        .offset(dragging?.rod == rod && dragging?.disk == size ? dragOffset : .zero)
+                        .allowsHitTesting(isTop && !viewModel.isPlaying)
+                        .highPriorityGesture(
+                            DragGesture(minimumDistance: 5)
+                                .onChanged { value in
+                                    guard isTop, viewModel.canPickTop(from: rod, disk: size) else { return }
+                                    dragging = (rod, size)
+                                    dragOffset = value.translation
+                                }
+                                .onEnded { value in
+                                    guard dragging != nil else { return }
+                                    let stepWidth = width * 0.6
+                                    let steps = Int((value.translation.width / stepWidth).rounded())
+                                    let clamped = max(-2, min(2, steps))
+                                    let target = offsetRod(from: rod, by: clamped)
+                                    Task { @MainActor in
+                                        _ = viewModel.tryMoveTop(from: rod, to: target, enforceRules: false)
+                                    }
+                                    dragging = nil
+                                    dragOffset = .zero
+                                }
+                        )
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .frame(width: width, alignment: .bottom)
             .animation(.snappy(duration: 0.25), value: viewModel.rods)
         }
-        .frame(width: width, height: 260, alignment: .bottom)
+        .frame(width: width, height: height, alignment: .bottom)
         .accessibilityLabel("Rod \(rod.rawValue)")
         .accessibilityHint("Hanoi Tower Rod")
+    }
+
+    private func offsetRod(from: Rod, by steps: Int) -> Rod {
+        let order: [Rod] = [.A, .B, .C]
+        guard let i = order.firstIndex(of: from) else { return from }
+        let j = max(0, min(order.count - 1, i + steps))
+        return order[j]
     }
 }
 

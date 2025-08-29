@@ -43,8 +43,12 @@ final class BoardViewModel {
     }
     
     func load(diskCount n: Int, moves: [SolveResponse.MoveDTO]) {
-        reset(diskCount: n)
+        stop()                                // cancel any running loop
+        currentIndex = 0                       // start at the beginning
         queued = moves
+        rods[.A] = Array((1...n).reversed())
+        rods[.B] = []
+        rods[.C] = []
     }
     
     //Reflect a new disk count on board before we fecch moves
@@ -54,6 +58,24 @@ final class BoardViewModel {
     }
     
     //MARK: Player Controles
+    
+    func canPickTop(from rod: Rod, disk: Int) -> Bool {
+        guard !isPlaying, let top = rods[rod]?.last else { return false }
+        return top == disk
+    }
+
+    @MainActor
+    @discardableResult
+    func tryMoveTop(from: Rod, to: Rod) -> Bool {
+        guard var fromStack = rods[from], var toStack = rods[to] else { return false }
+        guard let disk = fromStack.last else { return false }
+        if let top = toStack.last, top < disk { return false }
+        _ = fromStack.popLast()
+        toStack.append(disk)
+        rods[from] = fromStack
+        rods[to]  = toStack
+        return true
+    }
     
     func play() {
         guard !isPlaying, hasQueue, !isAtEnd else { return }
@@ -119,6 +141,22 @@ final class BoardViewModel {
                to.append(disk)
                rods[fromRod] = from
                rods[toRod] = to
+    }
+    
+    //Ignore manual validation
+    @MainActor
+    @discardableResult
+    func tryMoveTop(from: Rod, to: Rod, enforceRules: Bool = true) -> Bool {
+        guard var fromStack = rods[from], var toStack = rods[to] else { return false }
+        guard let disk = fromStack.last else { return false }
+        if enforceRules {
+            if let top = toStack.last, top < disk { return false }
+        }
+        _ = fromStack.popLast()
+        toStack.append(disk)
+        rods[from] = fromStack
+        rods[to]  = toStack
+        return true
     }
 
 }
